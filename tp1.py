@@ -1,100 +1,66 @@
 import requests
 from bs4 import BeautifulSoup
+import pandas as pd
+import time
 
-# حاول استيراد pandas لو موجود، وإلا نكمل بدون حفظ CSV
-try:
-    import pandas as pd
-    PANDAS_AVAILABLE = True
-except ImportError:
-    PANDAS_AVAILABLE = False
+def fetch_html(url):
+    """تحميل الصفحة وإرجاع محتواها"""
+    headers = {"User-Agent": "Mozilla/5.0"}
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return response.text
+    else:
+        print(f" فشل تحميل الصفحة: {url}")
+        return None
 
-def fetch_html(url, timeout=10):
-    """يحمل HTML من العنوان ويعيد النص و رمز الحالة"""
-    headers = {
-        "User-Agent": "Mozilla/5.0 (compatible; Bot/0.1; +https://example.com/bot)"
-    }
-    resp = requests.get(url, headers=headers, timeout=timeout)
-    resp.raise_for_status()  # يرفع استثناء لو كان هناك خطأ
-    return resp.text
+def extract_quotes(html):
+    """استخراج الاقتباسات والمؤلفين"""
+    soup = BeautifulSoup(html, "html.parser")
+    quotes_data = []
 
-def extract_quotes_from_soup(soup):
-    """
-    يبحث عن اقتباسات في الصفحة. يدعم شكل موقع quotes.toscrape.com
-    ويجرب بدائل: عناصر <blockquote> أو عناصر لها class يحتوي 'quote' أو <p class="text">.
-    يعيد قائمة من القواميس: {'text':..., 'author':..., 'tags': [...]}
-    """
-    results = []
-
-    # حالة شائعة: site "quotes.toscrape.com"
-    quote_divs = soup.find_all("div", class_="quote")
-    if quote_divs:
-        for q in quote_divs:
-            text_tag = q.find("span", class_="text")
-            author_tag = q.find("small", class_="author")
-            tags = [t.get_text(strip=True) for t in q.find_all("a", class_="tag")]
-            results.append({
-                "text": text_tag.get_text(strip=True) if text_tag else "",
-                "author": author_tag.get_text(strip=True) if author_tag else "",
-                "tags": ", ".join(tags)
-            })
-        return results
-
-    # بديل: عناصر blockquote
-    blockquotes = soup.find_all("blockquote")
-    if blockquotes:
-        for b in blockquotes:
-            # نص الاقتباس (نأخذ النص الداخلي)
-            text = b.get_text(strip=True)
-            results.append({"text": text, "author": "", "tags": ""})
-        return results
-
-    # بديل عام: ابحث عن <p class="text"> أو عن كل <p>
-    p_texts = soup.find_all("p", class_="text")
-    if p_texts:
-        for p in p_texts:
-            results.append({"text": p.get_text(strip=True), "author": "", "tags": ""})
-        return results
-
-    # آخر حل: اجمع كل <p> صغيرة (تحفظ بعض الاقتباسات)
-    p_tags = soup.find_all("p")
-    for p in p_tags:
-        txt = p.get_text(strip=True)
-        if len(txt) > 30:  # فلترة نصوص قصيرة جدًا
-            results.append({"text": txt, "author": "", "tags": ""})
-
-    return results
+    # كل اقتباس في Goodreads داخل <div class="quoteText">
+    quote_blocks = soup.find_all("div", class_="quoteText")
+    for block in quote_blocks:
+        text = block.get_text(strip=True, separator=" ").split("―")[0].strip()
+        author = block.find("span", class_="authorOrTitle")
+        if author:
+            author_name = author.get_text(strip=True)
+        else:
+            author_name = "غير معروف"
+        quotes_data.append({
+            "Quote": text,
+            "Author": author_name
+        })
+    return quotes_data
 
 def main():
-    # غَيِّر هذا الرابط وفق المطلوب: المثال الرسمي للاقتباسات:
-    url = "https://quotes.toscrape.com/"  # أو "https://books.toscrape.com/" لو أردت صفحة الكتب
+    all_quotes = []
+    page = 1
 
-    print(f"Fetching: {url}")
-    html = fetch_html(url)
+    while len(all_quotes) < 1000:
+        url = f"https://www.goodreads.com/quotes?page={page}"
+        print(f"جاري تحميل الصفحة {page}... ({url})")
 
-    # 1) عرض HTML (يمكن تعديل الطباعة لعرض جزء فقط)
-    print("\n--- بداية HTML (أول 1000 حرف) ---\n")
-    print(html[:1000])   # بدل 1000 لتطبع أكثر أو اطبع html كله بحذر
-    print("\n--- نهاية جزء HTML ---\n")
+        html = fetch_html(url)
+        if not html:
+            break
 
-    # 2) استخراج الاقتباسات باستخدام BeautifulSoup
-    soup = BeautifulSoup(html, "html.parser")
-    quotes = extract_quotes_from_soup(soup)
-    print(f"اكتشفت {len(quotes)} اقتباس(ات).")
+        quotes = extract_quotes(html)
+        if not quotes:
+            print(f" لا توجد اقتباسات في الصفحة {page} (انتهت الصفحات)")
+            break
 
-    # عرض أول 10 اقتباسات (أو كلهم)
-    for i, q in enumerate(quotes[:10], start=1):
-        print(f"{i}. \"{q['text']}\" — {q.get('author','')}")
-        if q.get("tags"):
-            print(f"   tags: {q['tags']}")
+        all_quotes.extend(quotes)
+        print(f" تم استخراج {len(quotes)} اقتباس من الصفحة {page}")
+        page += 1
+        time.sleep(1)
 
-    # 3) حفظ النتائج في CSV باستخدام pandas (إن وجد)
-    if PANDAS_AVAILABLE:
-        df = pd.DataFrame(quotes)
-        csv_filename = "quotes.csv"
-        df.to_csv(csv_filename, index=False, encoding="utf-8-sig")
-        print(f"تم حفظ النتائج إلى {csv_filename}")
-    else:
-        print("pandas غير مثبت، تم تخطي حفظ CSV. للتثبيت: pip install pandas")
+    print(f" المجموع الكلي: {len(all_quotes)} اقتباساً")
+
+    # حفظ النتائج في CSV
+    df = pd.DataFrame(all_quotes)
+    df.to_csv("quotes.csv", index=False, encoding="utf-8-sig")
+    print(" تم حفظ النتائج في quotes.csv")
 
 if __name__ == "__main__":
     main()
