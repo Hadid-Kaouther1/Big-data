@@ -1,0 +1,85 @@
+1=استخدام Docker :
+docker run --name mon-cassandra -d cassandra:latest
+2=الوصول إلى CQLSH (واجهة الأوامر الخاصة بـ Cassandra):
+sudo docker exec -it mon-cassandra cqlsh
+3=تصميم قاعدة البيانات في Cassandra
+الخطوة 1: إنشاء Keyspace
+CREATE KEYSPACE IF NOT EXISTS resto_NY
+WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor': 1};
+
+USE resto_NY;
+الخطوة 2: إنشاء الجداول
+جدول Restaurant==
+CREATE TABLE Restaurant (
+    id INT,
+    Name VARCHAR,
+    borough VARCHAR,
+    BuildingNum VARCHAR,
+    Street VARCHAR,
+    ZipCode INT,
+    Phone text,
+    CuisineType VARCHAR,
+    PRIMARY KEY (id)
+);
+
+CREATE INDEX fk_Restaurant_cuisine ON Restaurant (CuisineType);
+جدول Inspection==
+CREATE TABLE Inspection (
+    idRestaurant INT,
+    InspectionDate date,
+    ViolationCode VARCHAR,
+    ViolationDescription VARCHAR,
+    CriticalFlag VARCHAR,
+    Score INT,
+    GRADE VARCHAR,
+    PRIMARY KEY (idRestaurant, InspectionDate)
+);
+
+CREATE INDEX fk_Inspection_Restaurant ON Inspection (Grade);
+الخطوة 3: نسخ ملفات CSV إلى الـ Container
+docker cp "C:\Users\PC\Downloads\restaurants\restaurants_inspections.csv" mon-cassandra:/
+"C:\Users\PC\Downloads\restaurants\restaurants.csv" mon-cassandra:/
+££تحقق من وجود الملفات داخل الـ container:
+الخطوة 4: استيراد البيانات إلى Cassandra
+USE resto_NY;
+
+COPY Restaurant (id, name, borough, buildingnum, street, zipcode, phone, cuisinetype)
+FROM '/restaurants.csv' WITH DELIMITER=',';
+
+COPY Inspection (idrestaurant, inspectiondate, violationcode, violationdescription, criticalflag, score, grade)
+FROM '/restaurants_inspections.csv' WITH DELIMITER=',';
+تحقق من عدد الصفوف:
+SELECT count(*) FROM Restaurant;
+SELECT count(*) FROM Inspect
+
+الخطوة 5:استعلامات CQL بسيطة
+1. قائمة جميع المطاعم
+SELECT * FROM Restaurant LIMIT 10;
+2. قائمة أسماء المطاعم
+SELECT Name FROM Restaurant LIMIT 10;
+3. اسم وborough لمطعم رقم 41569764
+SELECT Name, borough FROM Restaurant WHERE id = 41569764;
+4. تواريخ وgrades للتفتيش لهذا المطعم
+SELECT InspectionDate, GRADE 
+FROM Inspection 
+WHERE idRestaurant = 41569764;
+5. أسماء المطاعم ذات cuisine الفرنسية
+SELECT Name 
+FROM Restaurant 
+WHERE CuisineType = 'French' ALLOW FILTERING;
+6. أسماء المطاعم في BROOKLYN
+SELECT Name 
+FROM Restaurant 
+WHERE borough = 'BROOKLYN' ALLOW FILTERING;
+7. Grades وScores لتفتيش لمطعم 41569764 مع score ≥ 10
+SELECT GRADE, Score 
+FROM Inspection 
+WHERE idRestaurant = 41569764 AND Score >= 10 ALLOW FILTERING;
+8. Grades للتفتيشات مع score > 30
+SELECT GRADE 
+FROM Inspection 
+WHERE Score > 30 ALLOW FILTERING;
+9. عدد الصفوف المسترجعة
+SELECT COUNT(*) 
+FROM Inspection 
+WHERE Score > 30 ALLOW FILTERING;
