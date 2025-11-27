@@ -1,0 +1,12 @@
+تعليمة بناء صورة
+docker build -t tp3-image:1.0 .
+رفع الصورة لـ Docker Hub
+docker tag tp3-image:1.0 kaoutherhadid/tp3-image:1.0
+docker push kaoutherhadid/tp3-image:1.0
+إنشاء الشبكة (network):
+تربط الكونتينرات الثلاثة ببعضهم
+docker network create tp3-network
+تشغيل الكونتينرات (Containers):
+docker run -d --name tp3-container1 --network tp3-network -p 8881:8888 tp3-image:1.0
+docker run -d --name tp3-container2 --network tp3-network -p 8882:8888 tp3-image:1.0
+docker run -d --name tp3-container3 --network tp3-network -p 8883:8888 tp3-image:1.0
