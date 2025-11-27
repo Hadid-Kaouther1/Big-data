@@ -1,0 +1,137 @@
+Microsoft Windows [Version 10.0.19045.6456]
+(c) Microsoft Corporation. All rights reserved.
+
+C:\Users\INFOLAB>cd C:\mongodb-win32-x86_64-2008plus-2.6.4\mongodb-win32-x86_64-2008plus-2.6.4\bin
+
+C:\mongodb-win32-x86_64-2008plus-2.6.4\mongodb-win32-x86_64-2008plus-2.6.4\bin>mongo.exe
+MongoDB shell version: 2.6.4
+connecting to: test
+>
+> use info
+switched to db info
+> db.createCollection("produits")
+{ "ok" : 1 }
+> db.produits.insert({
+...     nom: "Thinkpad X230",
+...     fabriquant: "Lenovo",
+...     prix: 114358.74,
+...     ultrabook: true,
+...     options: [
+...         "Intel Core i5",
+...         "SSD",
+...         "Long life battery"
+...     ]
+... })
+WriteResult({ "nInserted" : 1 })
+> db.produits.insert({
+...     nom: "Macbook Pro",
+...     fabriquant: "Apple",
+...     prix: 11435.99,
+...     options: [
+...         "Intel Core i5",
+...         "Retina Display",
+...         "Long life battery"
+...     ]
+... })
+WriteResult({ "nInserted" : 1 })
+> db.produits.insert({
+...     nom: "Macbook Air",
+...     fabriquant: "Apple",
+...     prix: 125794.73,
+...     ultrabook: true,
+...     options: [
+...         "Intel Core i7",
+...         "SSD",
+...         "Long life battery"
+...     ]
+... })
+WriteResult({ "nInserted" : 1 })
+> db.produits.insert({
+...     nom: "Thinkpad X230",
+...     fabriquant: "Lenovo",
+...     prix: 114358.74,
+...     ultrabook: true,
+...     options: [
+...         "Intel Core i5",
+...         "SSD",
+...         "Long life battery"
+...     ]
+... })
+WriteResult({ "nInserted" : 1 })
+> db.produits.find()
+{ "_id" : ObjectId("6926af90777cb21fe8373168"), "nom" : "Thinkpad X230", "fabriquant" : "Lenovo", "prix" : 114358.74, "ultrabook" : true, "options" : [ "Intel Core i5", "SSD", "Long life battery" ] }
+{ "_id" : ObjectId("6926afb2777cb21fe8373169"), "nom" : "Macbook Pro", "fabriquant" : "Apple", "prix" : 11435.99, "options" : [ "Intel Core i5", "Retina Display", "Long life battery" ] }
+{ "_id" : ObjectId("6926b01c777cb21fe837316a"), "nom" : "Macbook Air", "fabriquant" : "Apple", "prix" : 125794.73, "ultrabook" : true, "options" : [ "Intel Core i7", "SSD", "Long life battery" ] }
+{ "_id" : ObjectId("6926b03f777cb21fe837316b"), "nom" : "Thinkpad X230", "fabriquant" : "Lenovo", "prix" : 114358.74, "ultrabook" : true, "options" : [ "Intel Core i5", "SSD", "Long life battery" ] }
+> db.produits.findOne()
+{
+        "_id" : ObjectId("6926af90777cb21fe8373168"),
+        "nom" : "Thinkpad X230",
+        "fabriquant" : "Lenovo",
+        "prix" : 114358.74,
+        "ultrabook" : true,
+        "options" : [
+                "Intel Core i5",
+                "SSD",
+                "Long life battery"
+        ]
+}
+> db.produits.find({ nom: "Thinkpad X230" })
+{ "_id" : ObjectId("6926af90777cb21fe8373168"), "nom" : "Thinkpad X230", "fabriquant" : "Lenovo", "prix" : 114358.74, "ultrabook" : true, "options" : [ "Intel Core i5", "SSD", "Long life battery" ] }
+{ "_id" : ObjectId("6926b03f777cb21fe837316b"), "nom" : "Thinkpad X230", "fabriquant" : "Lenovo", "prix" : 114358.74, "ultrabook" : true, "options" : [ "Intel Core i5", "SSD", "Long life battery" ] }
+> db.produits.find({ _id: ObjectId("6926af90777cb21fe8373168") })
+{ "_id" : ObjectId("6926af90777cb21fe8373168"), "nom" : "Thinkpad X230", "fabriquant" : "Lenovo", "prix" : 114358.74, "ultrabook" : true, "options" : [ "Intel Core i5", "SSD", "Long life battery" ] }
+> db.produits.remove({ _id: ObjectId("6926af90777cb21fe8373168") })
+WriteResult({ "nRemoved" : 1 })
+> db.produits.find().pretty()
+{
+        "_id" : ObjectId("6926afb2777cb21fe8373169"),
+        "nom" : "Macbook Pro",
+        "fabriquant" : "Apple",
+        "prix" : 11435.99,
+        "options" : [
+                "Intel Core i5",
+                "Retina Display",
+                "Long life battery"
+        ]
+}
+{
+        "_id" : ObjectId("6926b01c777cb21fe837316a"),
+        "nom" : "Macbook Air",
+        "fabriquant" : "Apple",
+        "prix" : 125794.73,
+        "ultrabook" : true,
+        "options" : [
+                "Intel Core i7",
+                "SSD",
+                "Long life battery"
+        ]
+}
+{
+        "_id" : ObjectId("6926b03f777cb21fe837316b"),
+        "nom" : "Thinkpad X230",
+        "fabriquant" : "Lenovo",
+        "prix" : 114358.74,
+        "ultrabook" : true,
+        "options" : [
+                "Intel Core i5",
+                "SSD",
+                "Long life battery"
+        ]
+}
+> db.produits.remove({ fabriquant: "Apple" })
+WriteResult({ "nRemoved" : 2 })
+> db.produits.remove({ _id: ObjectId("6926b03f777cb21fe837316b") })
+WriteResult({ "nRemoved" : 1 })
+> db.produits.find().pretty()
+> show dbs
+admin  (empty)
+info   0.078GB
+local  0.078GB
+> use info
+switched to db info
+> show collections
+produits
+system.indexes
+> db.produits.find()
+>
