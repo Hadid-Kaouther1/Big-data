@@ -1,0 +1,17 @@
+1+set JAVA_HOME=C:\Users\PC\Downloads\OpenJDK25U-jdk_x64_windows_hotspot_25.0.1_8\jdk-25.0.1+8
+set PATH=%JAVA_HOME%\bin;%PATH%
+2+افتح
+ cd C:\kafka
+.\bin\windows\zookeeper-server-start.bat .\config\zookeeper.properties
+3+افتحcmd
+cd C:\kafka
+.\bin\windows\kafka-server-start.bat .\config\server-1.properties
+4+افتحcmd
+cd C:\kafka
+.\bin\windows\kafka-server-start.bat .\config\server-2.properties
+5+افتحcmd
+cd C:\kafka
+.\bin\windows\kafka-server-start.bat .\config\server-3.properties
+تحقق من الCluster
+.\bin\windows\kafka-topics.bat --list --bootstrap-server localhost:9093
+شغل Producer وConsumer
